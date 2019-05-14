@@ -1,0 +1,13 @@
+export PROJECT=<YOUR-PROJECT-ID>
+gcloud config set project $PROJECT
+gsutil mb -c regional -l us-central1 gs://$PROJECT
+bq mk lake
+gsutil cp gs://$PROJECT/datafile/data_ingestion.py .
+gsutil cp gs://$PROJECT/datafile/data_export.py .
+sudo pip install --upgrade virtualenv
+virtualenv -p `which python 2.7` dataflow-env
+source dataflow-env/bin/activate
+pip install apache-beam[gcp]
+python data_ingestion.py --project=$PROJECT --runner=DataflowRunner --staging_location=gs://$PROJECT/test --temp_location gs://$PROJECT/test --input gs://$PROJECT/datafile/emp.csv --testfile gs://$PROJECT/testfile --save_main_session
+
+python data_export.py --project=$PROJECT --runner=DataflowRunner --staging_location=gs://$PROJECT/test --temp_location gs://$PROJECT/test --input gs://$PROJECT/datafile/emp.csv --testfile gs://$PROJECT/testfile --save_main_session
